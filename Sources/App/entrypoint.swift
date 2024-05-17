@@ -7,6 +7,8 @@ import NIOPosix
 enum Entrypoint {
     static func main() async throws {
         var env = try Environment.detect()
+        let botToken = Environment.get("BOT_TOKEN")
+        print()
         try LoggingSystem.bootstrap(from: &env)
         
         let app = try await Application.make(env)
@@ -23,6 +25,9 @@ enum Entrypoint {
             try? await app.asyncShutdown()
             throw error
         }
+        let apikey = ProcessInfo.processInfo.environment["BOT_TOKEN"] ?? "NO KEY FOUND"
+        print(app.environment)
+        print(apikey)
         try await app.execute()
         try await app.asyncShutdown()
     }
