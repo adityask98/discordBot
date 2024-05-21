@@ -1,15 +1,15 @@
-import Vapor
+import DiscordBM
 import Logging
 import NIOCore
 import NIOPosix
-import DiscordBM
+import Vapor
 
 @main
 enum Entrypoint {
     static func main() async throws {
         var env = try Environment.detect()
         try LoggingSystem.bootstrap(from: &env)
-        
+
         let app = try await Application.make(env)
 
         // This attempts to install NIO as the Swift Concurrency global executor.
@@ -29,8 +29,13 @@ enum Entrypoint {
         )
 
         Task { await bot.connect() }
-        
-        
+
+        Task {
+            for await event in await bot.events {
+                EventHandler(event: event, client: bot.client).handle()
+            }
+        }
+
         do {
             try await configure(app)
         } catch {
