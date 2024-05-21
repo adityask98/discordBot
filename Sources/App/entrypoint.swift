@@ -2,13 +2,12 @@ import Vapor
 import Logging
 import NIOCore
 import NIOPosix
+import DiscordBM
 
 @main
 enum Entrypoint {
     static func main() async throws {
         var env = try Environment.detect()
-        let botToken = Environment.get("BOT_TOKEN")
-        print()
         try LoggingSystem.bootstrap(from: &env)
         
         let app = try await Application.make(env)
@@ -17,6 +16,20 @@ enum Entrypoint {
         // You should not call any async functions before this point.
         let executorTakeoverSuccess = NIOSingletons.unsafeTryInstallSingletonPosixEventLoopGroupAsConcurrencyGlobalExecutor()
         app.logger.debug("Running with \(executorTakeoverSuccess ? "SwiftNIO" : "standard") Swift Concurrency default executor")
+        let bot: BotGatewayManager = await BotGatewayManager(
+            eventLoopGroup: app.eventLoopGroup,
+            httpClient: app.http.client.shared,
+            token: Constants.botToken,
+            presence: .init(
+                activities: [.init(name: "SwiftBot", type: .game)],
+                status: .online,
+                afk: false
+            ),
+            intents: [.guildMessages, .messageContent]
+        )
+
+        Task { await bot.connect() }
+        
         
         do {
             try await configure(app)
@@ -25,9 +38,6 @@ enum Entrypoint {
             try? await app.asyncShutdown()
             throw error
         }
-        let apikey = ProcessInfo.processInfo.environment["BOT_TOKEN"] ?? "NO KEY FOUND"
-        print(app.environment)
-        print(apikey)
         try await app.execute()
         try await app.asyncShutdown()
     }

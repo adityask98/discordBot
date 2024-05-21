@@ -1,5 +1,7 @@
 import Foundation
 
+
+// Pulls thh env variables from the respective .env.* file.
 enum Constants {
     static func env(_ key:String) -> String {
         if let value = ProcessInfo.processInfo.environment[key] {

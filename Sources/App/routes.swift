@@ -2,7 +2,7 @@ import Vapor
 
 func routes(_ app: Application) throws {
     app.get { req async in
-        "Bot Token: \(String(describing: Environment.process.BOT_TOKEN))"
+        "Bot Token: \(Constants.botToken)"
     }
 
     app.get("hello") { req async -> String in
